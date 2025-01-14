@@ -2,26 +2,26 @@ package page
 
 import (
 	"github.com/DB-Vincent/go-eink-driver/pkg/display"
-	"k8s.io/client-go/kubernetes"
+	k8s "github.com/DB-Vincent/inkube/internal/kubernetes"
 )
 
 type PageManager struct {
 	display     *display.Display
-	client      *kubernetes.Clientset
-	pages       []func(*display.Display, *kubernetes.Clientset) error
+	kubeConn    *k8s.KubernetesConnection
+	pages       []func(*display.Display, *k8s.KubernetesConnection) error
 	currentPage int
 }
 
-func NewManager(eink *display.Display, client *kubernetes.Clientset) *PageManager {
+func NewManager(eink *display.Display, kubeConn *k8s.KubernetesConnection) *PageManager {
 	return &PageManager{
 		display:     eink,
-		client:      client,
-		pages:       make([]func(*display.Display, *kubernetes.Clientset) error, 0),
+		kubeConn:    kubeConn,
+		pages:       make([]func(*display.Display, *k8s.KubernetesConnection) error, 0),
 		currentPage: 0,
 	}
 }
 
-func (pm *PageManager) AddPage(page func(*display.Display, *kubernetes.Clientset) error) {
+func (pm *PageManager) AddPage(page func(*display.Display, *k8s.KubernetesConnection) error) {
 	pm.pages = append(pm.pages, page)
 }
 
@@ -34,5 +34,5 @@ func (pm *PageManager) NextPage() {
 }
 
 func (pm *PageManager) CurrentPage() error {
-	return pm.pages[pm.currentPage](pm.display, pm.client)
+	return pm.pages[pm.currentPage](pm.display, pm.kubeConn)
 }

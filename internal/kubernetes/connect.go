@@ -6,11 +6,18 @@ import (
 
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
+	metricsclientset "k8s.io/metrics/pkg/client/clientset/versioned"
 
 	"github.com/DB-Vincent/inkube/internal/config"
 )
 
-func createRestConfig(config *config.Config) (*rest.Config, error) {
+type KubernetesConnection struct {
+	Clientset     *kubernetes.Clientset
+	RestConfig    *rest.Config
+	MetricsClient *metricsclientset.Clientset
+}
+
+func (kubeconn *KubernetesConnection) createRestConfig(config *config.Config) (*rest.Config, error) {
 	caData, err := base64.StdEncoding.DecodeString(config.Cluster.CertificateAuthorityData)
 	if err != nil {
 		return nil, fmt.Errorf("failed to decode CA data: %v", err)
@@ -26,32 +33,39 @@ func createRestConfig(config *config.Config) (*rest.Config, error) {
 		return nil, fmt.Errorf("failed to decode client key data: %v", err)
 	}
 
-	return &rest.Config{
+	kubeconn.RestConfig = &rest.Config{
 		Host: config.Cluster.Server,
 		TLSClientConfig: rest.TLSClientConfig{
 			CAData:   caData,
 			CertData: clientCertData,
 			KeyData:  clientKeyData,
 		},
-	}, nil
+	}
+
+	return kubeconn.RestConfig, nil
 }
 
-func ConnectToCluster() (*kubernetes.Clientset, error) {
+func (kubeconn *KubernetesConnection) ConnectToCluster() (*kubernetes.Clientset, error) {
 	configPath := "config.toml"
 	config, err := config.Load(configPath)
 	if err != nil {
 		return nil, fmt.Errorf("failed to load config: %v", err)
 	}
 
-	restConfig, err := createRestConfig(config)
+	kubeconn.RestConfig, err = kubeconn.createRestConfig(config)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create REST config: %v", err)
 	}
 
-	clientset, err := kubernetes.NewForConfig(restConfig)
+	kubeconn.Clientset, err = kubernetes.NewForConfig(kubeconn.RestConfig)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create Kubernetes client: %v", err)
 	}
 
-	return clientset, nil
+	kubeconn.MetricsClient, err = metricsclientset.NewForConfig(kubeconn.RestConfig)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create metrics client: %v", err)
+	}
+
+	return kubeconn.Clientset, nil
 }
