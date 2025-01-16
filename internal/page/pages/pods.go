@@ -12,37 +12,38 @@ import (
 	"k8s.io/client-go/kubernetes"
 )
 
-func getPodCount(client *kubernetes.Clientset) (map[string]int, error) {
+type PodCount struct {
+	Running   int
+	Pending   int
+	Succeeded int
+	Failed    int
+	Unknown   int
+}
+
+func getPodCount(client *kubernetes.Clientset) (PodCount, error) {
 	pods, err := client.CoreV1().Pods("").List(context.Background(), metav1.ListOptions{})
 	if err != nil {
-		return nil, fmt.Errorf("failed to list pods: %v", err)
+		return PodCount{}, fmt.Errorf("failed to list pods: %v", err)
 	}
-	running := 0
-	pending := 0
-	succeeded := 0
-	failed := 0
-	unknown := 0
+
+	podCount := PodCount{}
+	podCount.Running, podCount.Pending, podCount.Succeeded, podCount.Failed, podCount.Unknown = 0, 0, 0, 0, 0
+
 	for _, pod := range pods.Items {
 		switch pod.Status.Phase {
 		case "Running":
-			running++
+			podCount.Running++
 		case "Pending":
-			pending++
+			podCount.Pending++
 		case "Succeeded":
-			succeeded++
+			podCount.Succeeded++
 		case "Failed":
-			failed++
+			podCount.Failed++
 		default:
-			unknown++
+			podCount.Unknown++
 		}
 	}
-	return map[string]int{
-		"running":   running,
-		"pending":   pending,
-		"succeeded": succeeded,
-		"failed":    failed,
-		"unknown":   unknown,
-	}, nil
+	return podCount, nil
 }
 
 func PodPage(display *display.Display, kubeConn *k8s.KubernetesConnection) error {
@@ -52,11 +53,11 @@ func PodPage(display *display.Display, kubeConn *k8s.KubernetesConnection) error
 	}
 
 	display.ClearCanvas()
-	graphics.Text(display.Canvas, 10, 0, fmt.Sprintf("%d running", podCount["running"]))
-	graphics.Text(display.Canvas, 10, 15, fmt.Sprintf("%d pending", podCount["pending"]))
-	graphics.Text(display.Canvas, 10, 30, fmt.Sprintf("%d succeeded", podCount["succeeded"]))
-	graphics.Text(display.Canvas, 10, 45, fmt.Sprintf("%d failed", podCount["failed"]))
-	graphics.Text(display.Canvas, 10, 60, fmt.Sprintf("%d unknown", podCount["unknown"]))
+	graphics.Text(display.Canvas, 10, 0, fmt.Sprintf("%d running", podCount.Running))
+	graphics.Text(display.Canvas, 10, 15, fmt.Sprintf("%d pending", podCount.Pending))
+	graphics.Text(display.Canvas, 10, 30, fmt.Sprintf("%d succeeded", podCount.Succeeded))
+	graphics.Text(display.Canvas, 10, 45, fmt.Sprintf("%d failed", podCount.Failed))
+	graphics.Text(display.Canvas, 10, 60, fmt.Sprintf("%d unknown", podCount.Unknown))
 	graphics.Text(display.Canvas, 10, 105, fmt.Sprintf("Last refresh: %s", time.Now().Format("15:04:05")))
 	display.DrawCanvas()
 

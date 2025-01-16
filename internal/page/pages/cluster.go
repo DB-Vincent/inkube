@@ -31,7 +31,7 @@ type NodeMetrics struct {
 	Memory
 }
 
-func GetNodeResourceUsage(clientset *kubernetes.Clientset, metricsClient *metricsclientset.Clientset) (NodeMetrics, error) {
+func getNodeResourceUsage(clientset *kubernetes.Clientset, metricsClient *metricsclientset.Clientset) (NodeMetrics, error) {
 	nodeMetrics, err := metricsClient.MetricsV1beta1().NodeMetricses().List(context.TODO(), metav1.ListOptions{})
 	if err != nil {
 		return NodeMetrics{}, fmt.Errorf("failed to get node metrics: %v", err)
@@ -83,13 +83,13 @@ func GetNodeResourceUsage(clientset *kubernetes.Clientset, metricsClient *metric
 func ClusterPage(display *display.Display, kubeConn *k8s.KubernetesConnection) error {
 	display.ClearCanvas()
 
-	nodeMetrics, err := GetNodeResourceUsage(kubeConn.Clientset, kubeConn.MetricsClient)
+	nodeMetrics, err := getNodeResourceUsage(kubeConn.Clientset, kubeConn.MetricsClient)
 	if err != nil {
 		return fmt.Errorf("failed to get node metrics: %v", err)
 	}
 
-	graphics.Text(display.Canvas, 10, 15, fmt.Sprintf("CPU: %.2f/%.2fCores (%.2f%%)", nodeMetrics.CPU.UsedCores, nodeMetrics.CPU.TotalCores, nodeMetrics.CPU.UsagePercent))
-	graphics.Text(display.Canvas, 10, 30, fmt.Sprintf("Memory: %d/%dMB (%.2f%%)", (nodeMetrics.Memory.UsedBytes/1024/1024), (nodeMetrics.Memory.TotalBytes/1024/1024), nodeMetrics.Memory.UsagePercent))
+	graphics.Text(display.Canvas, 10, 0, fmt.Sprintf("CPU: %.2f/%.2f Cores (%.2f%%)", nodeMetrics.CPU.UsedCores, nodeMetrics.CPU.TotalCores, nodeMetrics.CPU.UsagePercent))
+	graphics.Text(display.Canvas, 10, 15, fmt.Sprintf("Memory: %d/%d MB (%.2f%%)", (nodeMetrics.Memory.UsedBytes/1024/1024), (nodeMetrics.Memory.TotalBytes/1024/1024), nodeMetrics.Memory.UsagePercent))
 
 	graphics.Text(display.Canvas, 10, 105, fmt.Sprintf("Last refresh: %s", time.Now().Format("15:04:05")))
 	display.DrawCanvas()

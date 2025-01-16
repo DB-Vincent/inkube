@@ -32,7 +32,6 @@ func main() {
 
 	pm := page.NewManager(einkDisplay, &kubeConn)
 	pm.AddPage(pages.PodPage)
-	pm.AddPage(pages.NodePage)
 	pm.AddPage(pages.ClusterPage)
 
 	for {
