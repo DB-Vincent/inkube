@@ -14,4 +14,8 @@ type Config struct {
 	Namespace struct {
 		Default string `toml:"default"`
 	} `toml:"namespace"`
+
+  Display struct {
+    Refresh string `toml:"refresh"`
+  } `toml:"display"`
 }

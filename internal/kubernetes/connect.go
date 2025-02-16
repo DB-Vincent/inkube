@@ -45,14 +45,10 @@ func (kubeconn *KubernetesConnection) createRestConfig(config *config.Config) (*
 	return kubeconn.RestConfig, nil
 }
 
-func (kubeconn *KubernetesConnection) ConnectToCluster() (*kubernetes.Clientset, error) {
-	configPath := "config.toml"
-	config, err := config.Load(configPath)
-	if err != nil {
-		return nil, fmt.Errorf("failed to load config: %v", err)
-	}
+func (kubeconn *KubernetesConnection) ConnectToCluster(config *config.Config) (*kubernetes.Clientset, error) {
+  err := fmt.Errorf("") 
 
-	kubeconn.RestConfig, err = kubeconn.createRestConfig(config)
+  kubeconn.RestConfig, err = kubeconn.createRestConfig(config)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create REST config: %v", err)
 	}
