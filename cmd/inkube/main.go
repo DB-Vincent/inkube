@@ -42,6 +42,9 @@ func main() {
 	pm := page.NewManager(einkDisplay, &kubeConn)
 	pm.AddPage(pages.PodPage)
 	pm.AddPage(pages.ClusterPage)
+	pm.AddPage(pages.NetworkPage)
+	pm.AddPage(pages.VolumePage)
+	pm.AddPage(pages.NodePage)
 
   refreshRate, _ := strconv.Atoi(config.Display.Refresh) 
 
